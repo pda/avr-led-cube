@@ -44,6 +44,7 @@ Code makes things happen. Multiplexing etc.
 
 Regret: an 8x8 layout, instead of 4x16, could have been driven by a MAX2719
 LED driver/multiplexer, saving lots of components and clock cycles.
+(Upside: 1/4 duty cycle is probably better than 1/8).
 
 
 Port map
@@ -57,34 +58,7 @@ Port map
   * 0..5: Anodes 2..7 (Arduino analog 0..5)
   * 6..7: (not available)
 * AVR PORT D
-  * 0..7: Anodes 8..15 (Arduino digital 0..7)
-
-
-Pin map
--------
-
-* Digital pin
-  * 0: Anode 8
-  * 1: Anode 9
-  * 2: Anode 10 (A)
-  * 3: Anode 11 (B)
-  * 4: Anode 12 (C)
-  * 5: Anode 13 (D)
-  * 6: Anode 14 (E)
-  * 7: Anode 15 (F)
-  * 8: Anode 0
-  * 9: Anode 1
-  * 10: Cathode 0
-  * 11: Cathode 1
-  * 12: Cathode 2
-  * 13: Cathode 3
-* Analog pin
-  * 0: Anode 2
-  * 1: Anode 3
-  * 2: Anode 4
-  * 3: Anode 5
-  * 4: Anode 6
-  * 5: Anode 7
+  * 0..7: Anodes 8..15 (8..F) (Arduino digital 0..7)
 
 
 LED map
