@@ -13,21 +13,27 @@
 #define MASK_PORTB_CATHODE 0b00111100
 #define MASK_PORTB_ANODE 0b00000011
 
-typedef struct {
+typedef struct vector3 {
   uint8_t x, y, z;
-  byte on;
-} point_t;
+} vector3_t;
 
 typedef struct drop {
-  point_t p;
+  vector3_t p;
   uint8_t speed;
   uint8_t z; // extended z; divide by 8 for p->z
 } drop_t;
+
+#define SNAKE_LENGTH 4
+typedef struct snake {
+  vector3_t points[SNAKE_LENGTH];
+  uint8_t head;
+} snake_t;
 
 uint8_t loopCount = 0;
 uint16_t tickCount = 0;
 
 drop_t drops[6];
+snake_t snake;
 
 // buffers for per-port anode data.
 byte anodesPortB[CATHODE_COUNT];
@@ -89,24 +95,25 @@ void clearLeds() {
   }
 }
 
+void setupDrops() {
+  for (int i = 0; i < sizeof(drops) / sizeof(vector3_t); i++) {
+    randomDrop(&drops[i]);
+  }
+}
+
 void randomDrop(struct drop * d) {
-  point_t * p = &d->p;
+  vector3_t * p = &d->p;
   d->speed = rand() % 2 + 1;
   d->z = 0;
   p->x = rand() % 4;
   p->y = rand() % 4;
   p->z = 0;
-  p->on = 1;
 }
 
-// Called once per perceivable frame, to update animation.
-void tick() {
-
-  clearLeds();
-
+void tickDrops() {
   for (int i = 0; i < sizeof(drops) / sizeof(drop_t); i++) {
     drop_t * d = &drops[i];
-    point_t * p = &d->p;
+    vector3_t * p = &d->p;
 
     d->z += d->speed;
 
@@ -120,8 +127,64 @@ void tick() {
       randomDrop(d);
     }
 
-    setLed(p->x, p->y, p->z, p->on);
+    setLed(p->x, p->y, p->z, 1);
   }
+}
+
+void setupSnake() {
+  snake.head = 0;
+  for (int i = 0; i < SNAKE_LENGTH; i++) {
+    snake.points[i].x = 0;
+    snake.points[i].y = 0;
+    snake.points[i].z = 0;
+  }
+}
+
+void drawSnake() {
+  for (int i = 0; i < SNAKE_LENGTH; i++) {
+    vector3_t * p = &snake.points[i];
+    setLed(p->x, p->y, p->z, 1);
+  }
+}
+
+void tickSnake() {
+  if (tickCount % 4 == 0) {
+    uint8_t nextHead = (snake.head + 1) % SNAKE_LENGTH;
+    vector3_t * pHead = &snake.points[snake.head];
+    vector3_t * pNext = &snake.points[nextHead];
+
+    uint8_t x, y, z;
+    x = pHead->x;
+    y = pHead->y;
+    z = pHead->z;
+
+    pNext->x = x;
+    pNext->y = y;
+    pNext->z = z;
+
+    uint8_t chance = rand() % 6;
+    switch (chance) {
+      case 0: if (x > 0) pNext->x--; break;
+      case 1: if (x < 3) pNext->x++; break;
+      case 2: if (y > 0) pNext->y--; break;
+      case 3: if (y < 3) pNext->y++; break;
+      case 4: if (z > 0) pNext->z--; break;
+      case 5: if (z < 3) pNext->z++; break;
+    }
+
+    snake.head = nextHead;
+  }
+
+  drawSnake();
+}
+
+// Called once per perceivable frame, to update animation.
+void tick() {
+
+  clearLeds();
+
+  //tickDrops();
+  tickSnake();
 
   tickCount++;
 }
@@ -144,9 +207,8 @@ void setupPorts() {
 }
 
 void setupAnimation() {
-  for (int i = 0; i < sizeof(drops) / sizeof(point_t); i++) {
-    randomDrop(&drops[i]);
-  }
+  //setupDrops();
+  setupSnake();
 }
 
 // Arduino initialization.
