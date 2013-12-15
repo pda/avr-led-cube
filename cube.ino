@@ -39,21 +39,33 @@ void setAnodes(int layer) {
   PORTD = anodesPortD[layer];
 }
 
-void setLed(uint8_t x, uint8_t y, uint8_t z, byte on) {
+void ledAddress(uint8_t x, uint8_t y, uint8_t z,
+  byte ** portBuffer, uint8_t * bitIndex) {
 
   // flatten x{0...4},y{0...4} to i{0...16}
   uint8_t i = y * CATHODE_COUNT + x;
 
-  if (i < 2) {
-    if (on) anodesPortB[z] |= (1 << i);
-    else anodesPortB[z] &= ~(1 << i);
-  } else if (i < 8) {
-    if (on) anodesPortC[z] |= (1 << (i - 2));
-    else anodesPortC[z] &= ~(1 << (i - 2));
+  if (i >= 8) {
+    *portBuffer = &anodesPortD[z];
+    *bitIndex = i - 8;
+  } else if (i >= 2) {
+    *portBuffer = &anodesPortC[z];
+    *bitIndex = i - 2;
   } else {
-    if (on) anodesPortD[z] |= (1 << (i - 8));
-    else anodesPortD[z] &= ~(1 << (i - 8));
+    *portBuffer = &anodesPortB[z];
+    *bitIndex = i;
   }
+}
+
+void setLed(uint8_t x, uint8_t y, uint8_t z, byte on) {
+
+  byte * portBuffer;
+  uint8_t bitIndex;
+  ledAddress(x, y, z, &portBuffer, &bitIndex);
+
+  if (on) *portBuffer |= (1 << bitIndex);
+  else *portBuffer &= ~(1 << bitIndex);
+
 }
 
 // Called once per perceivable frame, to update animation.

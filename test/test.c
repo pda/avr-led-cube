@@ -2,20 +2,11 @@
 #include "../cube.ino"
 
 void doLed(int x, int y, int z) {
+  byte * portBuffer;
+  uint8_t bitIndex;
+  ledAddress(x, y, z, &portBuffer, &bitIndex);
 
-  // flatten x{0...4},y{0...4} to i{0...16}
-  uint8_t i = y * CATHODE_COUNT + x;
-  uint8_t on = 0;
-
-  if (i < 2) {
-    on = anodesPortB[z] >> i;
-  } else if (i < 8) {
-    on = anodesPortC[z] >> (i - 2);
-  } else {
-    on = anodesPortD[z] >> (i - 8);
-  }
-
-  putchar(on ? '@' : '.');
+  putchar(*portBuffer >> bitIndex ? '@' : '.');
 }
 
 void doLayer(int z) {
@@ -43,7 +34,7 @@ int main() {
   printf("\033[25A"); // up 25 lines
   printf("\033[2J"); // Clear the screen, move to (0,0)
 
-  for (int i = 0; i <= 1000; i++) {
+  for (int i = 0; i <= 512; i++) {
     tick();
     render();
     usleep(40000);
