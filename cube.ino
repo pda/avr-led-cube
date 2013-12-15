@@ -13,8 +13,21 @@
 #define MASK_PORTB_CATHODE 0b00111100
 #define MASK_PORTB_ANODE 0b00000011
 
-uint16_t loopCount = 0;
-uint32_t tickCount = 0;
+typedef struct {
+  uint8_t x, y, z;
+  byte on;
+} point_t;
+
+typedef struct drop {
+  point_t p;
+  uint8_t speed;
+  uint8_t z; // extended z; divide by 8 for p->z
+} drop_t;
+
+uint8_t loopCount = 0;
+uint16_t tickCount = 0;
+
+drop_t drops[6];
 
 // buffers for per-port anode data.
 byte anodesPortB[CATHODE_COUNT];
@@ -68,14 +81,48 @@ void setLed(uint8_t x, uint8_t y, uint8_t z, byte on) {
 
 }
 
+void clearLeds() {
+  for (int z = 0; z < CATHODE_COUNT; z++) {
+    anodesPortB[z] = 0x00;
+    anodesPortC[z] = 0x00;
+    anodesPortD[z] = 0x00;
+  }
+}
+
+void randomDrop(struct drop * d) {
+  point_t * p = &d->p;
+  d->speed = rand() % 2 + 1;
+  d->z = 0;
+  p->x = rand() % 4;
+  p->y = rand() % 4;
+  p->z = 0;
+  p->on = 1;
+}
+
 // Called once per perceivable frame, to update animation.
 void tick() {
-  uint8_t x, y, z, on;
-  x = (tickCount % CATHODE_COUNT);
-  y = (tickCount % ANODE_COUNT) / CATHODE_COUNT;
-  z = (tickCount % LED_COUNT) / ANODE_COUNT;
-  on = (tickCount % (LED_COUNT * 2) < LED_COUNT);
-  setLed(x, y, z, on);
+
+  clearLeds();
+
+  for (int i = 0; i < sizeof(drops) / sizeof(drop_t); i++) {
+    drop_t * d = &drops[i];
+    point_t * p = &d->p;
+
+    d->z += d->speed;
+
+    if (d->z < 32) {
+      p->z = d->z / 8;
+    } else {
+      p->z = 3;
+    }
+
+    if (d->z >= 36) {
+      randomDrop(d);
+    }
+
+    setLed(p->x, p->y, p->z, p->on);
+  }
+
   tickCount++;
 }
 
@@ -96,15 +143,22 @@ void setupPorts() {
   DDRD |= MASK_PORTD; // anode 8..15
 }
 
+void setupAnimation() {
+  for (int i = 0; i < sizeof(drops) / sizeof(point_t); i++) {
+    randomDrop(&drops[i]);
+  }
+}
+
 // Arduino initialization.
 void setup() {
   setupPorts();
   clearCathodes();
+  setupAnimation();
 }
 
 // Arduino loop.
 void loop() {
-  if (loopCount++ == 5) {
+  if (loopCount++ == 4) {
     loopCount = 0;
     tick();
   }
