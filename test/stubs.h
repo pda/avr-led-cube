@@ -1,4 +1,8 @@
+#include <stdlib.h>
+#include <stdio.h>
+#include <unistd.h>
 #include <stdint.h>
+
 typedef uint8_t byte;
 
 void delayMicroseconds(int us) {

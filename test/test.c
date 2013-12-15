@@ -1,22 +1,28 @@
 #include "stubs.h"
 #include "../cube.ino"
 
-#include <stdlib.h>
-#include <stdio.h>
-#include <unistd.h>
+void doLed(int x, int y, int z) {
 
-void doLed(int layer, int x, int y) {
-  if (buffer[layer][(y * 4) + x])
-    putc('@', stdout);
-  else
-    putc('.', stdout);
+  // flatten x{0...4},y{0...4} to i{0...16}
+  uint8_t i = y * CATHODE_COUNT + x;
+  uint8_t on = 0;
+
+  if (i < 2) {
+    on = anodesPortB[z] >> i;
+  } else if (i < 8) {
+    on = anodesPortC[z] >> (i - 2);
+  } else {
+    on = anodesPortD[z] >> (i - 8);
+  }
+
+  putchar(on ? '@' : '.');
 }
 
-void doLayer(int layer) {
+void doLayer(int z) {
   for (int y = 0; y <= 3; y++) {
-    for (int i = 0; i < y * 4; i++) putc(' ', stdout);
+    for (int i = 0; i < y * 4; i++) putchar(' ');
     for (int x = 0; x <= 3; x++) {
-      doLed(layer, x, y);
+      doLed(x, y, z);
       printf("     ");
     }
     printf("\n");
@@ -26,9 +32,8 @@ void doLayer(int layer) {
 
 void render() {
   printf("\033[25A"); // up 25 lines
-
-  for (int layer = 0; layer <= 3; layer++) {
-    doLayer(layer);
+  for (int z = 0; z <= 3; z++) {
+    doLayer(z);
   }
   printf("\n\n");
 }
@@ -38,9 +43,9 @@ int main() {
   printf("\033[25A"); // up 25 lines
   printf("\033[2J"); // Clear the screen, move to (0,0)
 
-  for (int i = 0; i <= 100; i++) {
+  for (int i = 0; i <= 1000; i++) {
     tick();
     render();
-    usleep(50000);
+    usleep(40000);
   }
 }
