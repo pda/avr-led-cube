@@ -18,9 +18,9 @@ typedef struct vector3 {
 } vector3_t;
 
 typedef struct drop {
-  vector3_t p;
+  vector3_t pos;
   uint8_t speed;
-  uint8_t z; // extended z; divide by 8 for p->z
+  uint8_t z; // extended z; divide by 8 for pos->z
 } drop_t;
 
 #define SNAKE_LENGTH 4
@@ -102,32 +102,32 @@ void setupDrops() {
 }
 
 void randomDrop(struct drop * d) {
-  vector3_t * p = &d->p;
+  vector3_t * pos = &d->pos;
   d->speed = rand() % 2 + 1;
   d->z = 0;
-  p->x = rand() % 4;
-  p->y = rand() % 4;
-  p->z = 0;
+  pos->x = rand() % 4;
+  pos->y = rand() % 4;
+  pos->z = 0;
 }
 
 void tickDrops() {
   for (int i = 0; i < sizeof(drops) / sizeof(drop_t); i++) {
     drop_t * d = &drops[i];
-    vector3_t * p = &d->p;
+    vector3_t * pos = &d->pos;
 
     d->z += d->speed;
 
     if (d->z < 32) {
-      p->z = d->z / 8;
+      pos->z = d->z / 8;
     } else {
-      p->z = 3;
+      pos->z = 3;
     }
 
     if (d->z >= 36) {
       randomDrop(d);
     }
 
-    setLed(p->x, p->y, p->z, 1);
+    setLed(pos->x, pos->y, pos->z, 1);
   }
 }
 
@@ -142,8 +142,8 @@ void setupSnake() {
 
 void drawSnake() {
   for (int i = 0; i < SNAKE_LENGTH; i++) {
-    vector3_t * p = &snake.points[i];
-    setLed(p->x, p->y, p->z, 1);
+    vector3_t * pos = &snake.points[i];
+    setLed(pos->x, pos->y, pos->z, 1);
   }
 }
 
