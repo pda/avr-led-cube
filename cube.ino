@@ -25,7 +25,7 @@ typedef struct drop {
 
 #define SNAKE_LENGTH 4
 typedef struct snake {
-  vector3_t points[SNAKE_LENGTH];
+  vector3_t segments[SNAKE_LENGTH];
   uint8_t head;
 } snake_t;
 
@@ -134,15 +134,15 @@ void tickDrops() {
 void setupSnake() {
   snake.head = 0;
   for (int i = 0; i < SNAKE_LENGTH; i++) {
-    snake.points[i].x = 0;
-    snake.points[i].y = 0;
-    snake.points[i].z = 0;
+    snake.segments[i].x = 0;
+    snake.segments[i].y = 0;
+    snake.segments[i].z = 0;
   }
 }
 
 void drawSnake() {
   for (int i = 0; i < SNAKE_LENGTH; i++) {
-    vector3_t * pos = &snake.points[i];
+    vector3_t * pos = &snake.segments[i];
     setLed(pos->x, pos->y, pos->z, 1);
   }
 }
@@ -150,8 +150,8 @@ void drawSnake() {
 void tickSnake() {
   if (tickCount % 4 == 0) {
     uint8_t nextHead = (snake.head + 1) % SNAKE_LENGTH;
-    vector3_t * pHead = &snake.points[snake.head];
-    vector3_t * pNext = &snake.points[nextHead];
+    vector3_t * pHead = &snake.segments[snake.head];
+    vector3_t * pNext = &snake.segments[nextHead];
 
     uint8_t x, y, z;
     x = pHead->x;
