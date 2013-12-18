@@ -3,6 +3,8 @@ LED Cube
 
 4x4x4 LED cube.
 
+![cube](https://s3.amazonaws.com/99designs-pda-screenshots/led-cube-4x4x4.gif)
+
 * Cathode per layer (4) driven low via PN2222 transistors.
 * Anode per column (16) driven high directly.
 
