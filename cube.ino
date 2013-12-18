@@ -14,7 +14,7 @@
 #define MASK_PORTB_ANODE 0b00000011
 
 typedef struct vector3 {
-  uint8_t x, y, z;
+  int8_t x, y, z;
 } vector3_t;
 
 typedef struct drop {
@@ -23,9 +23,10 @@ typedef struct drop {
   uint8_t z; // extended z; divide by 8 for pos->z
 } drop_t;
 
-#define SNAKE_LENGTH 4
+#define SNAKE_LENGTH 6
 typedef struct snake {
   vector3_t segments[SNAKE_LENGTH];
+  vector3_t velocity;
   uint8_t head;
 } snake_t;
 
@@ -131,6 +132,25 @@ void tickDrops() {
   }
 }
 
+// adds v2 to v1, putting the results into target.
+void vector3Add(struct vector3 * v1, struct vector3 * v2, struct vector3 * target) {
+  target->x = v1->x + v2->x;
+  target->y = v1->y + v2->y;
+  target->z = v1->z + v2->z;
+}
+
+void vectorSet(struct vector3 * v, int x, int y, int z) {
+  v->x = x;
+  v->y = y;
+  v->z = z;
+}
+
+void vectorCopy(struct vector3 * destination, struct vector3 * source) {
+  destination->x = source->x;
+  destination->y = source->y;
+  destination->z = source->z;
+}
+
 void setupSnake() {
   snake.head = 0;
   for (int i = 0; i < SNAKE_LENGTH; i++) {
@@ -138,6 +158,9 @@ void setupSnake() {
     snake.segments[i].y = 0;
     snake.segments[i].z = 0;
   }
+  snake.velocity.x = 1;
+  snake.velocity.y = 0;
+  snake.velocity.z = 0;
 }
 
 void drawSnake() {
@@ -153,24 +176,43 @@ void tickSnake() {
     vector3_t * pHead = &snake.segments[snake.head];
     vector3_t * pNext = &snake.segments[nextHead];
 
-    uint8_t x, y, z;
-    x = pHead->x;
-    y = pHead->y;
-    z = pHead->z;
+    // current head position
+    int8_t px, py, pz;
+    px = pHead->x;
+    py = pHead->y;
+    pz = pHead->z;
 
-    pNext->x = x;
-    pNext->y = y;
-    pNext->z = z;
+    vector3_t * v; // velocity
 
-    uint8_t chance = rand() % 6;
-    switch (chance) {
-      case 0: if (x > 0) pNext->x--; break;
-      case 1: if (x < 3) pNext->x++; break;
-      case 2: if (y > 0) pNext->y--; break;
-      case 3: if (y < 3) pNext->y++; break;
-      case 4: if (z > 0) pNext->z--; break;
-      case 5: if (z < 3) pNext->z++; break;
+    int optionCount = 0;
+    vector3_t options[6];
+    if (snake.velocity.x == 0) { // not already moving along x
+      if (px <= 2) vectorSet(&options[optionCount++], 1, 0, 0);
+      if (px >= 1) vectorSet(&options[optionCount++], -1, 0, 0);
     }
+    if (snake.velocity.y == 0) { // not already moving along y
+      if (py <= 2) vectorSet(&options[optionCount++], 0, 1, 0);
+      if (py >= 1) vectorSet(&options[optionCount++], 0, -1, 0);
+    }
+    if (snake.velocity.z == 0) { // not already moving along z
+      if (pz <= 2) vectorSet(&options[optionCount++], 0, 0, 1);
+      if (pz >= 1) vectorSet(&options[optionCount++], 0, 0, -1);
+    }
+
+    // whether the snake can continue in a straight line
+    byte canContinue =
+      (v->x == 1 && px <= 2) || (v->x == -1 && px >= 1) ||
+      (v->y == 1 && py <= 2) || (v->y == -1 && py >= 1) ||
+      (v->z == 1 && pz <= 2) || (v->z == -1 && pz >= 1);
+
+    //if (!canContinue || rand() % 4 == 0) {
+    if (!canContinue) {
+      // pick one of the turning options.
+      vectorCopy(&snake.velocity, &options[rand() % optionCount]);
+    }
+
+    // affect the movement.
+    vector3Add(pHead, &snake.velocity, pNext);
 
     snake.head = nextHead;
   }
